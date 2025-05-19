@@ -1,0 +1,50 @@
+services:
+  backend:
+    build: ./backend
+    container_name: gatherbite-backend
+    command: >
+      bash -c "
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000
+      "
+    volumes:
+      - ./backend:/code/backend
+    ports:
+      - 8000:8000
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PORT=${DB_PORT}
+      - POSTGRES_HOST=${DB_HOST}
+      - DEBUG=True
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:14
+    container_name: gatherbite-db
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - gatherbite_data:/var/lib/postgresql/data/
+    ports:
+      - 5433:5432
+
+  redis:
+    image: redis:alpine
+    container_name: gatherbite-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  gatherbite_data:

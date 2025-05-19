@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Django specific
+*.log
+*.pot
+*.pyc
+*.mo
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# Ignore local settings and environment
+.env
+.env.*
+settings/local.py
+config/settings/local.py
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.tox/
+.pytest_cache/
+
+# Migrations (optional to ignore)
+**/migrations/*.py
+!**/migrations/__init__.py
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# Node (if using Tailwind, React, etc.)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+
+# Sentry
+.sentryclirc
+
+# Gunicorn
+gunicorn.log
+gunicorn.pid
