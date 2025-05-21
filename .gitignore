@@ -25,6 +25,7 @@ staticfiles/
 .env.*
 settings/local.py
 config/settings/local.py
+firebase_admin_sdk.json
 
 # Virtual environments
 venv/
