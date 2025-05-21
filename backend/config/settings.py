@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework",
+    "rest_framework_simplejwt",
+    'corsheaders',
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -126,3 +131,20 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),   # short-lived token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),      # long-lived refresh
+    'ROTATE_REFRESH_TOKENS': True,                    # optional: rotate tokens
+    'BLACKLIST_AFTER_ROTATION': True,                 # if using blacklist
+}
+
+MSG91_AUTH_KEY = "452765AYubfWrHifVR682cf357P1"
+MSG91_TEMPLATE_ID = "your_template_id"
