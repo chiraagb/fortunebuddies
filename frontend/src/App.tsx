@@ -1,19 +1,28 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+// src/App.tsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginHomePage from "./auth/LoginHomePage";
 import LoginMainPage from "./auth/LoginMainPage";
 import FormQuestions from "./main/FormQuestions";
 import ThankYou from "./main/ThankYouPage";
+import PrivateRoute from "./PrivateRoute";
 
-const App = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LoginHomePage />} />
-        <Route path="/login" element={<LoginMainPage />} />
-        <Route path="/form-questions" element={<FormQuestions />} />
-        <Route path="/thank-you" element={<ThankYou />} />
-      </Routes>
-    </BrowserRouter>
-  );
-};
+const App: React.FC = () => (
+  <BrowserRouter>
+    <Routes>
+      {/* Public */}
+      <Route index element={<LoginHomePage />} />
+      <Route path="login" element={<LoginMainPage />} />
+
+      {/* All routes under here are protected */}
+      <Route element={<PrivateRoute />}>
+        <Route path="form-questions" element={<FormQuestions />} />
+        <Route path="thank-you" element={<ThankYou />} />
+      </Route>
+
+      {/* Catch-all: redirect to home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </BrowserRouter>
+);
+
 export default App;

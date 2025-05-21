@@ -10,6 +10,7 @@ services:
       "
     volumes:
       - ./backend:/code/backend
+      - ./firebase_admin_sdk.json:/secrets/firebase_admin_sdk.json:ro
     ports:
       - 8000:8000
     environment:

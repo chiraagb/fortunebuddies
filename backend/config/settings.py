@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     'corsheaders',
     "accounts",
 ]
@@ -145,6 +146,3 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,                    # optional: rotate tokens
     'BLACKLIST_AFTER_ROTATION': True,                 # if using blacklist
 }
-
-MSG91_AUTH_KEY = "452765AYubfWrHifVR682cf357P1"
-MSG91_TEMPLATE_ID = "your_template_id"

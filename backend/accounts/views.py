@@ -1,39 +1,45 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.conf import settings
-import requests
+# yourapp/views.py
+from django.contrib.auth.models import User
+from rest_framework.views      import APIView
+from rest_framework.response   import Response
+from rest_framework            import status, permissions
+from rest_framework_simplejwt.tokens import RefreshToken
+from firebase_admin.auth      import verify_id_token, InvalidIdTokenError
+from .models                  import UserProfile
 
-# Create your views here.
+class FirebaseLogin(APIView):
+    permission_classes = [permissions.AllowAny]
 
-class SendOtpView(APIView):
     def post(self, request):
-        phone = request.data.get("phone")
-        if not phone:
-            return Response({"error": "Phone number required"}, status=400)
+        id_token = request.data.get("idToken")
+        if not id_token:
+            return Response({"detail": "idToken required"}, status=400)
 
-        payload = {
-            "mobile": phone,
-        }
+        try:
+            decoded = verify_id_token(id_token)
+            phone   = decoded.get("phone_number")
+            if not phone:
+                raise InvalidIdTokenError("no phone")
+        except Exception as e:
+            return Response({"detail": f"Invalid token: {str(e)}"}, status=400)
 
-        headers = {
-            "authkey": settings.MSG91_AUTH_KEY,
-            "Content-Type": "application/json",
-        }
-
-        response = requests.post("https://control.msg91.com/api/v5/otp", json=payload, headers=headers)
-
-        if response.status_code == 200:
-            return Response({"message": "OTP sent","response":response}, status=200)
+        # create or update user
+        user, created = User.objects.get_or_create(username=phone)
+        if created:
+            user.set_unusable_password()
+            user.save()
+            UserProfile.objects.create(user=user, phone=phone, is_verified=True)
         else:
-            return Response({"error": "Failed to send OTP", "detail": response.json()}, status=500)
-    
-    
-class VerifyOtpView(APIView):
-    def post(self, request):
-        # Logic to verify OTP
-        return Response({"message": "OTP verified successfully"}, status=200)
+            profile = user.user_profile
+            profile.is_verified = True
+            profile.save()
 
+        # issue JWT
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "access":  str(refresh.access_token),
+            "refresh": str(refresh),
+        })
+
+
+# you get /api/token/refresh/ via simplejwt out of the box
