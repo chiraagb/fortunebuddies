@@ -1,5 +1,6 @@
 // src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import LoginHomePage from "./auth/LoginHomePage";
 import LoginMainPage from "./auth/LoginMainPage";
 import FormQuestions from "./main/FormQuestions";
@@ -9,7 +10,7 @@ import PrivateRoute from "./PrivateRoute";
 const App: React.FC = () => (
   <BrowserRouter>
     <Routes>
-      {/* Public */}
+      {/* Public routes */}
       <Route index element={<LoginHomePage />} />
       <Route path="login" element={<LoginMainPage />} />
 
@@ -19,7 +20,7 @@ const App: React.FC = () => (
         <Route path="thank-you" element={<ThankYou />} />
       </Route>
 
-      {/* Catch-all: redirect to home */}
+      {/* Catch-all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </BrowserRouter>

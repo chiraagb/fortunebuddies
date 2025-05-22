@@ -75,3 +75,4 @@ pnpm-lock.yaml
 # Gunicorn
 gunicorn.log
 gunicorn.pid
+firebase_admin_sdk.json

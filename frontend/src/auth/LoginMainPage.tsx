@@ -110,7 +110,7 @@ const LoginMainPage = () => {
                   setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
                 }
                 placeholder="Enter your phone number"
-                className="w-full bg-transparent text-base text-gray-800 placeholder-gray-400 outline-none tracking-widest"
+                className="w-full bg-transparent text-base text-gray-800 placeholder-gray-400 outline-none tracking-wide"
               />
             </div>
 

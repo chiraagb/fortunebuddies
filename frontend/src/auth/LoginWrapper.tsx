@@ -1,4 +1,16 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 const LoginWrapper = ({ children }: { children?: React.ReactNode }) => {
+  const navigate = useNavigate();
+  const token = localStorage.getItem("access");
+
+  useEffect(() => {
+    if (token) {
+      navigate("/form-questions");
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-white font-poppins">
       {/* 🔪 Shared Background Image Section */}
