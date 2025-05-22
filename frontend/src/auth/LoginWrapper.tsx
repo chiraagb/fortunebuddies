@@ -1,6 +1,6 @@
 const LoginWrapper = ({ children }: { children?: React.ReactNode }) => {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white font-poppins">
       {/* 🔪 Shared Background Image Section */}
       <div
         className="relative h-[50vh] w-full bg-cover bg-center"

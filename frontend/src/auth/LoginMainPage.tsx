@@ -3,6 +3,7 @@ import LoginWrapper from "./LoginWrapper";
 import { toast } from "sonner";
 import OtpInput from "react-otp-input";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axiosInstance"; // import axios instance
 
 interface OtpChangeEvent {
   (value: string): void;
@@ -15,17 +16,29 @@ const LoginMainPage = () => {
   const [step, setStep] = useState("phone");
   const [bgColors, setBgColors] = useState(Array(6).fill("#FFFFFF"));
   const [borderColors, setBorderColors] = useState(Array(6).fill("#ccc"));
+  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // For loading state
   const navigate = useNavigate();
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!/^\d{10}$/.test(phone)) {
       setError("Please enter a valid 10-digit phone number");
       return;
     }
     setError("");
-    toast.success("OTP sent to +91 " + phone);
-    // Simulate API call
-    setStep("otp");
+    setIsLoading(true); // Set loading to true
+
+    try {
+      // Make API call to send OTP
+      const response = await api.post("/api/v1/accounts/send-otp/", { phone });
+      setVerificationId(response.data.verificationId);
+      toast.success(`OTP sent to +91 ${phone}`);
+      setStep("otp");
+    } catch (error) {
+      setError("Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false); // Reset loading state after the request is complete
+    }
   };
 
   const handleOtpChange: OtpChangeEvent = (value) => {
@@ -45,23 +58,40 @@ const LoginMainPage = () => {
     ]);
   };
 
-  const handleVerifyOtp = () => {
-    if (!/^\d{6}$/.test(otp)) {
-      setError("Please enter a valid 6-digit OTP");
+  const handleVerifyOtp = async () => {
+    if (!/^\d{4}$/.test(otp)) {
+      setError("Please enter a valid 4-digit OTP");
       return;
     }
     setError("");
-    toast.success("OTP verified!");
-    navigate("/form-questions");
+    setIsLoading(true); // Set loading to true
 
-    // Simulate verification API call
+    try {
+      // Make API call to verify OTP
+      const response = await api.post("/api/v1/accounts/verify-otp/", {
+        otp,
+        phone,
+        verificationId,
+      });
+
+      // Store tokens in local storage
+      localStorage.setItem("access", response.data.access);
+      localStorage.setItem("refresh", response.data.refresh);
+
+      toast.success("OTP verified!");
+      navigate("/form-questions");
+    } catch (error) {
+      setError("OTP verification failed. Please try again.");
+    } finally {
+      setIsLoading(false); // Reset loading state after the request is complete
+    }
   };
 
   return (
     <LoginWrapper>
       <div className="flex-1 px-6 py-4 text-center bg-white font-poppins">
         <h1 className="text-3xl font-semibold mb-2 leading-snug text-black">
-          Join us now & eat <br /> with confidence
+          Join the fortune <br /> find your buddies
         </h1>
 
         {step === "phone" && (
@@ -90,7 +120,8 @@ const LoginMainPage = () => {
               onClick={handleContinue}
               className="cursor-pointer mt-6 bg-[#f37b4c] hover:bg-[#e86a3c] text-white font-semibold w-full max-w-sm py-3 rounded-full shadow"
             >
-              Continue
+              {isLoading ? "Sending OTP..." : "Continue"}{" "}
+              {/* Display loading text */}
             </button>
           </>
         )}
@@ -105,7 +136,7 @@ const LoginMainPage = () => {
               <OtpInput
                 value={otp}
                 onChange={handleOtpChange}
-                numInputs={6}
+                numInputs={4}
                 inputType="tel"
                 containerStyle={{
                   display: "flex",
@@ -139,7 +170,8 @@ const LoginMainPage = () => {
                 onClick={handleVerifyOtp}
                 className="cursor-pointer bg-[#f37b4c] hover:bg-[#e86a3c] text-white font-semibold w-[105px] h-[43px] rounded-full shadow"
               >
-                Verify
+                {isLoading ? "Verifying..." : "Verify"}{" "}
+                {/* Display loading text */}
               </button>
             </div>
           </>

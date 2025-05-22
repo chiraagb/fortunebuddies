@@ -228,7 +228,7 @@ export default function MeetupForm() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white font-poppins">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-500 via-orange-300 to-transparent z-0 pointer-events-none"></div>
 
@@ -236,10 +236,11 @@ export default function MeetupForm() {
         {/* Logo and Header */}
         <div className="flex flex-col items-center mb-6">
           <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mb-4">
-            <div className="text-2xl font-bold">M</div>
+            <div className="text-2xl font-bold">FB</div>
           </div>
           <h1 className="text-3xl font-bold text-center">
-            Meetup Registration
+            {/* FortuneBuddies: Where Friendships Begin! */}
+            Join the Fortune, Find Your Buddies!
           </h1>
           <p className="text-orange-400 mt-2 text-center">
             Let's get to know you better!

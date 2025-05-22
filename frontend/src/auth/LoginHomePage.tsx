@@ -7,13 +7,13 @@ const LoginHomePage = () => {
 
   return (
     <LoginWrapper>
-      <div className="flex-1 px-6 pt-10 pb-10 text-center bg-white">
+      <div className="flex-1 px-6 pt-10 pb-10 text-center bg-white font-poppins">
         <h1 className="text-3xl font-semibold mb-2 leading-snug text-black">
-          Join us now & eat <br /> with confidence
+          Join the fortune, <br /> Find your buddies
         </h1>
 
         <p className="text-sm text-gray-500 mb-6">
-          Sign Up Now & Dine with New Friends!
+          Sign Up Now & Savor New Friends!
         </p>
 
         {/* 🎯 Button */}

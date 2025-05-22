@@ -1,6 +1,6 @@
 export default function ThankYou() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-black text-white px-4 font-poppins">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-orange-500 mb-4">
           🎉 Thank You!
