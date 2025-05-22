@@ -22,6 +22,7 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_PORT=${DB_PORT}
       - POSTGRES_HOST=${DB_HOST}
+      - MESSAGE_CENTRAL_AUTH_KEY=${MESSAGE_CENTRAL_AUTH_KEY}
       - DEBUG=True
     depends_on:
       - db

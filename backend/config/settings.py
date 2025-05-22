@@ -133,6 +133,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+CORS_ALLOW_ALL_ORIGINS = True
+
+
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
 
 
@@ -149,4 +152,4 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,                 # if using blacklist
 }
 
-MESSAGE_CENTRAL_AUTH_KEY= os.environ.get("MESSAGE_CENTRAL_AUTH_KEY", "")
+MESSAGE_CENTRAL_AUTH_KEY= os.getenv("MESSAGE_CENTRAL_AUTH_KEY")

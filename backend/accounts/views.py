@@ -9,45 +9,72 @@ from .models import UserProfile
 
 # Create your views here.
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import requests
+from django.conf import settings
+
 class SendOtpView(APIView):
     def post(self, request):
-        # Get phone number from the request data
         phone = request.data.get("phone")
         if not phone:
             return Response({"error": "Phone number required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Construct the URL for sending OTP
-        url = f"https://cpaas.messagecentral.com/verification/v3/send?countryCode=91&customerId=C-FDADCCFFFC2044E&flowType=SMS&mobileNumber={phone}"
+        url = (
+            f"https://cpaas.messagecentral.com/verification/v3/send"
+            f"?countryCode=91&customerId=C-FDADCCFFFC2044E&flowType=SMS&mobileNumber={phone}"
+        )
 
-        # Add the auth token to the headers
         headers = {
-            "authToken": settings.MESSAGE_CENTRAL_AUTH_KEY  # The auth key should be stored in Django settings
+            "authToken": settings.MESSAGE_CENTRAL_AUTH_KEY
         }
 
-        # Send the request to MessageCentral API
-        response = requests.post(url, headers=headers)
+        try:
+            response = requests.post(url, headers=headers)
+        except requests.RequestException as e:
+            return Response(
+                {"error": "Could not connect to OTP service", "detail": str(e)},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
 
-        if response.status_code == 200:
+        print("Auth token:", settings.MESSAGE_CENTRAL_AUTH_KEY)
+        try:
+
+            print("STATUS CODE:", response.status_code)
+            print("HEADERS:", response.headers)
+            print("RESPONSE TEXT:", response.text)
             response_data = response.json()
+        except ValueError:
+            return Response(
+                {"error": "Invalid JSON response from OTP service", "raw": response.text},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
 
-            # Extract verificationId from response
-            verification_id = response_data.get("data", {}).get("verificationId")
+        if response.status_code == 200 and response_data.get("responseCode") == 200:
+            data = response_data.get("data", {})
+            verification_id = data.get("verificationId")
             if verification_id:
-                return Response({"message": "OTP sent successfully.", "verificationId": verification_id}, status=status.HTTP_200_OK)
-            return Response({"error": "Failed to send OTP. Missing verificationId."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        return Response({"error": "Failed to send OTP", "detail": response.json()}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    
-import requests
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
-from django.conf import settings
-from django.contrib.auth.models import User
-from rest_framework_simplejwt.tokens import RefreshToken
-from .models import UserProfile
+                return Response({
+                    "message": "OTP sent successfully.",
+                    "verificationId": verification_id,
+                    "transactionId": data.get("transactionId"),
+                    "timeout": data.get("timeout")
+                }, status=status.HTTP_200_OK)
 
+            return Response({
+                "error": "Missing verificationId in response",
+                "response": response_data
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            "error": "Failed to send OTP",
+            "status_code": response.status_code,
+            "response": response_data
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+    
 
 class VerifyOtpView(APIView):
     def post(self, request):
