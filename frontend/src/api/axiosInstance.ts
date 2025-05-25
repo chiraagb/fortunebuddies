@@ -23,13 +23,15 @@ api.interceptors.response.use(
       }
       try {
         const { data } = await axios.post(
-          "/api/v1/accounts/auth/token/refresh/",
+          `${
+            import.meta.env.VITE_BASE_URL
+          }/api/v1/accounts/auth/token/refresh/`,
           {
             refresh,
           }
         );
         localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
+        // localStorage.setItem("refresh", data.refresh);
         original.headers!["Authorization"] = `Bearer ${data.access}`;
         return axios(original);
       } catch {

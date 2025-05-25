@@ -6,7 +6,8 @@ services:
       bash -c "
       python manage.py makemigrations &&
       python manage.py migrate &&
-      python manage.py runserver 0.0.0.0:8000
+      python manage.py populate_select_options &&
+      python manage.py runserver 0.0.0.0:8000 
       "
     volumes:
       - ./backend:/code/backend

@@ -78,90 +78,11 @@ export default function MeetupForm() {
     pet: [],
   });
 
-  const token = getToken();
+  const [formErrors, setFormErrors] = useState<{
+    [key in keyof FormData]?: string;
+  }>({});
 
-  const meetupLocations = ["Coffee Shop", "Restaurant", "Bar", "Park", "Mall"];
-  const preferredTimes = ["Morning", "Afternoon", "Evening", "Night"];
-  const languageOptions = [
-    "English",
-    "Spanish",
-    "French",
-    "German",
-    "Hindi",
-    "Chinese",
-    "Japanese",
-    "Korean",
-    "Russian",
-    "Arabic",
-  ];
-  const occupationOptions = [
-    "Undergraduate",
-    "Postgraduate",
-    "Working Professional",
-    "Entrepreneur",
-    "Self-Employed",
-    "Taking a break",
-  ];
-  const weekendOptions = [
-    "Outdoor activities",
-    "Staying in",
-    "Shopping",
-    "Traveling",
-    "Reading",
-    "Cooking",
-    "Exercising",
-    "Visiting friends/family",
-  ];
-  const hobbyOptions = [
-    "Reading",
-    "Gaming",
-    "Cooking",
-    "Gardening",
-    "Photography",
-    "Painting",
-    "Hiking",
-    "Swimming",
-    "Cycling",
-    "Music",
-    "Dancing",
-    "Writing",
-  ];
-  const movieOptions = [
-    "Action",
-    "Comedy",
-    "Drama",
-    "Romance",
-    "Thriller",
-    "Horror",
-    "Sci-Fi",
-    "Fantasy",
-    "Documentary",
-    "Animation",
-  ];
-  const musicOptions = [
-    "Pop",
-    "Rock",
-    "Jazz",
-    "Classical",
-    "Hip Hop",
-    "Electronic",
-    "Country",
-    "R&B",
-    "Metal",
-    "Folk",
-  ];
-  const cuisineOptions = [
-    "Italian",
-    "Chinese",
-    "Indian",
-    "Mexican",
-    "Japanese",
-    "Thai",
-    "French",
-    "Mediterranean",
-    "American",
-    "Middle Eastern",
-  ];
+  const token = getToken();
 
   useEffect(() => {
     async function fetchOptions() {
@@ -181,6 +102,12 @@ export default function MeetupForm() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormErrors((prevErrors) => {
+      const newErrors = { ...prevErrors };
+      delete newErrors[name as keyof FormData];
+      return newErrors;
+    });
   };
 
   const handleMultiSelect = (field: keyof FormData, value: string) => {
@@ -193,12 +120,41 @@ export default function MeetupForm() {
         ? [...current, value]
         : current,
     }));
+
+    setFormErrors((prevErrors) => {
+      const newErrors = { ...prevErrors };
+      delete newErrors[field];
+      return newErrors;
+    });
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    const payload = {
+      full_name: formData.fullName,
+      email: formData.email,
+      age: formData.age,
+      gender: formData.gender,
+      meetup_location: formData.meetupLocation,
+      preferred_time: formData.preferredTime,
+      plus_one: formData.plusOne,
+      languages: formData.languages,
+      occupation: formData.occupation,
+      meal_preference: formData.mealPreference,
+      venue_preference: formData.venuePreference,
+      budget: formData.budget,
+      group_activities: formData.groupActivities,
+      pets: formData.pets,
+      weekends: formData.weekends,
+      hobbies: formData.hobbies,
+      movies: formData.movies,
+      music: formData.music,
+      cuisine: formData.cuisine,
+    };
+
     try {
-      const res = await api.post("api/v1/forms/submit-form/", formData);
+      const res = await api.post("api/v1/forms/submit-form/", payload);
       alert("Form submitted successfully!");
       if (res?.data) {
         setStep(6);
@@ -218,6 +174,71 @@ export default function MeetupForm() {
   };
 
   const nextStep = () => {
+    let errors: { [key in keyof FormData]?: string } = {};
+
+    switch (step) {
+      case 1:
+        if (!formData.fullName) errors.fullName = "Full name is required.";
+        if (!formData.email) {
+          errors.email = "Email is required.";
+        } else {
+          // Email format validation using regex
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(formData.email)) {
+            errors.email = "Please enter a valid email address.";
+          }
+        }
+        if (!formData.age) errors.age = "Age is required.";
+        if (!formData.gender) errors.gender = "Gender is required.";
+        break;
+
+      case 2:
+        if (!formData.meetupLocation)
+          errors.meetupLocation = "Meetup location is required.";
+        if (!formData.preferredTime)
+          errors.preferredTime = "Preferred time is required.";
+        if (!formData.plusOne)
+          errors.plusOne = "Please select Plus One option.";
+        if (formData.languages.length === 0)
+          errors.languages = "Select at least one language.";
+        break;
+
+      case 3:
+        if (!formData.occupation) errors.occupation = "Occupation is required.";
+        if (!formData.mealPreference)
+          errors.mealPreference = "Meal preference is required.";
+        if (!formData.venuePreference)
+          errors.venuePreference = "Venue preference is required.";
+        if (!formData.budget) errors.budget = "Budget selection is required.";
+        break;
+
+      case 4:
+        if (!formData.groupActivities)
+          errors.groupActivities = "Group activity is required.";
+        if (!formData.pets) errors.pets = "Please select if you have pets.";
+        if (formData.weekends.length === 0)
+          errors.weekends = "Select at least one weekend preference.";
+        break;
+
+      case 5:
+        if (formData.hobbies.length === 0)
+          errors.hobbies = "Select at least one hobby.";
+        if (formData.movies.length === 0)
+          errors.movies = "Select at least one movie genre.";
+        if (formData.music.length === 0)
+          errors.music = "Select at least one music genre.";
+        if (formData.cuisine.length === 0)
+          errors.cuisine = "Select at least one cuisine type.";
+        break;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors); // Set the errors
+      window.scrollTo(0, 0);
+      return; // Prevent next step
+    }
+
+    setFormErrors({}); // Clear errors if validation passes
     setStep((prev) => prev + 1);
     window.scrollTo(0, 0);
   };
@@ -318,6 +339,11 @@ export default function MeetupForm() {
                     className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Enter your full name"
                   />
+                  {formErrors.fullName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.fullName}
+                    </p>
+                  )}
                 </div>
 
                 {formData.fullName && (
@@ -339,6 +365,11 @@ export default function MeetupForm() {
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="Enter your email address"
                     />
+                    {formErrors.email && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {formErrors.email}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -361,6 +392,11 @@ export default function MeetupForm() {
                     className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Enter your age"
                   />
+                  {formErrors.age && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.age}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -414,6 +450,11 @@ export default function MeetupForm() {
                       <span className="ml-2">Female</span>
                     </label>
                   </div>
+                  {formErrors.gender && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.gender}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -452,6 +493,11 @@ export default function MeetupForm() {
                       </option>
                     ))}
                   </select>
+                  {formErrors.meetupLocation && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.meetupLocation}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -479,9 +525,12 @@ export default function MeetupForm() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Note: Time options are managed in the admin panel
-                  </p>
+
+                  {formErrors.preferredTime && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.preferredTime}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -535,6 +584,11 @@ export default function MeetupForm() {
                       <span className="ml-2">No</span>
                     </label>
                   </div>
+                  {formErrors.plusOne && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.plusOne}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -550,6 +604,11 @@ export default function MeetupForm() {
                     field="languages"
                   />
                   <MultiSelectCounter field="languages" />
+                  {formErrors.languages && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.languages}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -588,6 +647,11 @@ export default function MeetupForm() {
                       </option>
                     ))}
                   </select>
+                  {formErrors.occupation && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.occupation}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -640,6 +704,11 @@ export default function MeetupForm() {
                       <span className="ml-2">Non-Vegetarian</span>
                     </label>
                   </div>
+                  {formErrors.mealPreference && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.mealPreference}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -692,6 +761,11 @@ export default function MeetupForm() {
                       <span className="ml-2">Food Only</span>
                     </label>
                   </div>
+                  {formErrors.venuePreference && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.venuePreference}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -755,6 +829,11 @@ export default function MeetupForm() {
                       <p className="text-xs mt-1">Premium</p>
                     </label>
                   </div>
+                  {formErrors.budget && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.budget}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -787,12 +866,20 @@ export default function MeetupForm() {
                           type="radio"
                           name="groupActivities"
                           value={activity}
+                          checked={formData.groupActivities === activity}
+                          onChange={handleInputChange}
                           className="sr-only"
                         />
+
                         {activity}
                       </label>
                     ))}
                   </div>
+                  {formErrors.groupActivities && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.groupActivities}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -814,11 +901,19 @@ export default function MeetupForm() {
                           type="radio"
                           name="pets"
                           value={pet}
+                          checked={formData.pets === pet}
+                          onChange={handleInputChange}
                           className="sr-only"
                         />
+
                         {pet}
                       </label>
                     ))}
+                    {formErrors.pets && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {formErrors.pets}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -835,6 +930,11 @@ export default function MeetupForm() {
                     field="weekends"
                   />
                   <MultiSelectCounter field="weekends" />
+                  {formErrors.weekends && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.weekends}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -858,6 +958,11 @@ export default function MeetupForm() {
                   </label>
                   <MultiSelectOptions options={options.hobby} field="hobbies" />
                   <MultiSelectCounter field="hobbies" />
+                  {formErrors.hobbies && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.hobbies}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -870,6 +975,11 @@ export default function MeetupForm() {
                   </label>
                   <MultiSelectOptions options={options.movie} field="movies" />
                   <MultiSelectCounter field="movies" />
+                  {formErrors.movies && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.movies}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -882,6 +992,11 @@ export default function MeetupForm() {
                   </label>
                   <MultiSelectOptions options={options.music} field="music" />
                   <MultiSelectCounter field="music" />
+                  {formErrors.music && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.music}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -898,6 +1013,11 @@ export default function MeetupForm() {
                   />
 
                   <MultiSelectCounter field="cuisine" />
+                  {formErrors.cuisine && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {formErrors.cuisine}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
