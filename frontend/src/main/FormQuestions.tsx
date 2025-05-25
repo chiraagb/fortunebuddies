@@ -1,6 +1,8 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getToken } from "../api/apiHelpers";
+import api from "../api/axiosInstance";
 
 // Define the form structure
 interface FormData {
@@ -61,6 +63,22 @@ export default function MeetupForm() {
     music: [],
     cuisine: [],
   });
+
+  const [options, setOptions] = useState<any>({
+    location: [],
+    time: [],
+    language: [],
+    occupation: [],
+    weekend: [],
+    hobby: [],
+    movie: [],
+    music: [],
+    cuisine: [],
+    group_activity: [],
+    pet: [],
+  });
+
+  const token = getToken();
 
   const meetupLocations = ["Coffee Shop", "Restaurant", "Bar", "Park", "Mall"];
   const preferredTimes = ["Morning", "Afternoon", "Evening", "Night"];
@@ -145,14 +163,24 @@ export default function MeetupForm() {
     "Middle Eastern",
   ];
 
+  useEffect(() => {
+    async function fetchOptions() {
+      try {
+        const res = await api.get("api/v1/forms/get-options/");
+
+        setOptions(res.data);
+      } catch (err) {
+        console.error("Failed to fetch options:", err);
+      }
+    }
+    fetchOptions();
+  }, [token]);
+
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleMultiSelect = (field: keyof FormData, value: string) => {
@@ -167,10 +195,22 @@ export default function MeetupForm() {
     }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log(formData);
-    // Proceed to payment step
+    try {
+      const res = await api.post("api/v1/forms/submit-form/", formData);
+      alert("Form submitted successfully!");
+      if (res?.data) {
+        setStep(6);
+      }
+    } catch (err: any) {
+      console.error("Submission failed:", err);
+      if (err.response) {
+        alert(`Error: ${JSON.stringify(err.response.data)}`);
+      } else {
+        alert("Network error. Try again.");
+      }
+    }
   };
 
   const handleRazorpay = () => {
@@ -202,7 +242,7 @@ export default function MeetupForm() {
 
   const MultiSelectOptions = ({ options, field }: MultiSelectProps) => (
     <div className="grid grid-cols-2 gap-2 mt-2">
-      {options.map((option) => (
+      {options?.map((option) => (
         <div
           key={option}
           onClick={() => handleMultiSelect(field, option)}
@@ -406,7 +446,7 @@ export default function MeetupForm() {
                     <option value="" disabled>
                       Select a location
                     </option>
-                    {meetupLocations.map((location) => (
+                    {options?.location?.map((location: string) => (
                       <option key={location} value={location}>
                         {location}
                       </option>
@@ -433,7 +473,7 @@ export default function MeetupForm() {
                     <option value="" disabled>
                       Select a time
                     </option>
-                    {preferredTimes.map((time) => (
+                    {options?.time?.map((time: string) => (
                       <option key={time} value={time}>
                         {time}
                       </option>
@@ -488,7 +528,7 @@ export default function MeetupForm() {
                             : "bg-gray-700 border-gray-500"
                         } flex items-center justify-center`}
                       >
-                        {formData.plusOne === "no" && (
+                        {formData?.plusOne === "no" && (
                           <div className="w-2 h-2 rounded-full bg-white"></div>
                         )}
                       </div>
@@ -506,7 +546,7 @@ export default function MeetupForm() {
                     </span>
                   </label>
                   <MultiSelectOptions
-                    options={languageOptions}
+                    options={options.language}
                     field="languages"
                   />
                   <MultiSelectCounter field="languages" />
@@ -542,7 +582,7 @@ export default function MeetupForm() {
                     <option value="" disabled>
                       Select your occupation
                     </option>
-                    {occupationOptions.map((occupation) => (
+                    {options?.occupation?.map((occupation: string) => (
                       <option key={occupation} value={occupation}>
                         {occupation}
                       </option>
@@ -734,12 +774,7 @@ export default function MeetupForm() {
                     <span className="text-orange-500">*</span>
                   </label>
                   <div className="grid grid-cols-1 gap-2">
-                    {[
-                      "Dancing/Clubs",
-                      "Games/Sports",
-                      "Just Chatting",
-                      "Karaoke and Live Music",
-                    ].map((activity) => (
+                    {options?.group_activity?.map((activity: string) => (
                       <label
                         key={activity}
                         className={`cursor-pointer border p-3 rounded-lg ${
@@ -752,8 +787,6 @@ export default function MeetupForm() {
                           type="radio"
                           name="groupActivities"
                           value={activity}
-                          checked={formData.groupActivities === activity}
-                          onChange={handleInputChange}
                           className="sr-only"
                         />
                         {activity}
@@ -768,7 +801,7 @@ export default function MeetupForm() {
                     <span className="text-orange-500">*</span>
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {["Cats", "Dogs", "None"].map((pet) => (
+                    {options?.pet?.map((pet: string) => (
                       <label
                         key={pet}
                         className={`cursor-pointer border p-3 rounded-lg text-center ${
@@ -781,8 +814,6 @@ export default function MeetupForm() {
                           type="radio"
                           name="pets"
                           value={pet}
-                          checked={formData.pets === pet}
-                          onChange={handleInputChange}
                           className="sr-only"
                         />
                         {pet}
@@ -800,7 +831,7 @@ export default function MeetupForm() {
                     </span>
                   </label>
                   <MultiSelectOptions
-                    options={weekendOptions}
+                    options={options.weekend}
                     field="weekends"
                   />
                   <MultiSelectCounter field="weekends" />
@@ -825,7 +856,7 @@ export default function MeetupForm() {
                       (Select up to 3)
                     </span>
                   </label>
-                  <MultiSelectOptions options={hobbyOptions} field="hobbies" />
+                  <MultiSelectOptions options={options.hobby} field="hobbies" />
                   <MultiSelectCounter field="hobbies" />
                 </div>
 
@@ -837,7 +868,7 @@ export default function MeetupForm() {
                       (Select up to 3)
                     </span>
                   </label>
-                  <MultiSelectOptions options={movieOptions} field="movies" />
+                  <MultiSelectOptions options={options.movie} field="movies" />
                   <MultiSelectCounter field="movies" />
                 </div>
 
@@ -849,7 +880,7 @@ export default function MeetupForm() {
                       (Select up to 3)
                     </span>
                   </label>
-                  <MultiSelectOptions options={musicOptions} field="music" />
+                  <MultiSelectOptions options={options.music} field="music" />
                   <MultiSelectCounter field="music" />
                 </div>
 
@@ -862,9 +893,10 @@ export default function MeetupForm() {
                     </span>
                   </label>
                   <MultiSelectOptions
-                    options={cuisineOptions}
+                    options={options.cuisine}
                     field="cuisine"
                   />
+
                   <MultiSelectCounter field="cuisine" />
                 </div>
               </div>
@@ -920,28 +952,7 @@ export default function MeetupForm() {
             {step === 5 && (
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    // const res = await fetch("/api/save-meetup-form", {
-                    //   method: "POST",
-                    //   headers: {
-                    //     "Content-Type": "application/json",
-                    //   },
-                    //   body: JSON.stringify(formData),
-                    // });
-
-                    // if (!res.ok) {
-                    //   throw new Error("Failed to submit form");
-                    // }
-
-                    // const result = await res.json();
-                    // console.log("Form submitted:", result);
-                    setStep(6); // Go to Payment step
-                  } catch (error) {
-                    console.error(error);
-                    alert("Error submitting form. Please try again.");
-                  }
-                }}
+                onClick={handleSubmit}
                 className="px-6 py-2 bg-orange-500 text-white rounded-lg flex items-center hover:bg-orange-600 transition-colors"
               >
                 <span className="mr-1">Continue to Payment</span>

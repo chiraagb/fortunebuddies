@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     'corsheaders',
     "accounts",
+    "forms"
 ]
 
 MIDDLEWARE = [
@@ -148,8 +149,8 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),   # short-lived token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),      # long-lived refresh
-    'ROTATE_REFRESH_TOKENS': True,                    # optional: rotate tokens
-    'BLACKLIST_AFTER_ROTATION': True,                 # if using blacklist
+    'ROTATE_REFRESH_TOKENS': False,                    # optional: rotate tokens
+    'BLACKLIST_AFTER_ROTATION': False,                 # if using blacklist
 }
 
 MESSAGE_CENTRAL_AUTH_KEY= os.getenv("MESSAGE_CENTRAL_AUTH_KEY")
