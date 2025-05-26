@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getToken } from "../api/apiHelpers";
 import api from "../api/axiosInstance";
+import { toast } from "sonner";
 
 // Define the form structure
 interface FormData {
@@ -155,7 +156,7 @@ export default function MeetupForm() {
 
     try {
       const res = await api.post("api/v1/forms/submit-form/", payload);
-      alert("Form submitted successfully!");
+      toast.success("Get Set, Pay & Connect!");
       if (res?.data) {
         setStep(6);
       }
