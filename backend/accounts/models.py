@@ -6,6 +6,7 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=15, unique=True)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    next_allowed_submission = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):

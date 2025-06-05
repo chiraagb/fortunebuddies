@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+import uuid
 
 class SelectOption(models.Model):
     OPTION_TYPES = (
@@ -24,6 +24,12 @@ class SelectOption(models.Model):
 
 
 class FormSubmission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='form_submissions')
     full_name = models.CharField(max_length=100)
     email = models.EmailField()
@@ -45,7 +51,7 @@ class FormSubmission(models.Model):
     movies = models.JSONField(default=list)
     music = models.JSONField(default=list)
     cuisine = models.JSONField(default=list)
-
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')  # New field
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

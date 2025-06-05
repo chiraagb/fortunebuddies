@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import SelectOption, FormSubmission
 from .serializers import FormSubmissionSerializer
+from accounts.models import UserProfile
+from django.utils import timezone
 
 class FormOptionsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -21,6 +23,37 @@ class FormSubmissionView(APIView):
     def post(self, request):
         serializer = FormSubmissionSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)  # Set the user field
-            return Response({"message": "Form submitted successfully!"})
+            # Save with pending payment status
+            form_submission = serializer.save(user=request.user, payment_status='pending')
+
+            return Response({
+                "message": "Form submitted successfully! Please complete the payment.",
+                "form_id": str(form_submission.id),
+                "payment_status": form_submission.payment_status
+            })
         return Response(serializer.errors, status=400)
+
+
+class CheckSubmissionStatus(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        latest_form = FormSubmission.objects.filter(user=user).order_by('-created_at').first()
+        user_profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        if latest_form:
+            if latest_form.payment_status == 'pending':
+                return Response({
+                    "can_submit": False,
+                    "redirect_to": "payment",
+                    "form_id": str(latest_form.id),
+                })
+            elif latest_form.payment_status == 'success' and user_profile.next_allowed_submission and user_profile.next_allowed_submission > timezone.now():
+                return Response({
+                    "can_submit": False,
+                    "next_allowed_submission": user_profile.next_allowed_submission.isoformat(),
+                    "redirect_to": "wait"
+                })
+
+        return Response({"can_submit": True, "redirect_to": "form"})
