@@ -116,6 +116,30 @@ const LoginMainPage = () => {
 
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
+            <div className="flex items-center justify-center space-x-2 mt-2">
+              <input
+                type="checkbox"
+                id="terms"
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="terms" className="text-xs text-gray-700">
+                I agree to{" "}
+                <span
+                  className="underline cursor-pointer"
+                  onClick={() => navigate("/terms-and-conditions")}
+                >
+                  T&C
+                </span>{" "}
+                and{" "}
+                <span
+                  className="underline cursor-pointer"
+                  onClick={() => navigate("/privacy-policy")}
+                >
+                  Privacy Policy
+                </span>
+              </label>
+            </div>
+
             <button
               onClick={handleContinue}
               className="cursor-pointer mt-6 bg-[#f37b4c] hover:bg-[#e86a3c] text-white font-semibold w-full max-w-sm py-3 rounded-full shadow"
