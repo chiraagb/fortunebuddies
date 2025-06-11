@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     'corsheaders',
     "accounts",
-    "forms"
+    "forms",
+    "payments",
 ]
 
 MIDDLEWARE = [
@@ -154,3 +155,8 @@ SIMPLE_JWT = {
 }
 
 MESSAGE_CENTRAL_AUTH_KEY= os.getenv("MESSAGE_CENTRAL_AUTH_KEY")
+
+
+CASHFREE_APP_ID = os.getenv("CASHFREE_APP_ID")
+CASHFREE_SECRET_KEY = os.getenv("CASHFREE_SECRET_KEY")
+CASHFREE_BASE_URL= os.getenv("CASHFREE_BASE_URL")

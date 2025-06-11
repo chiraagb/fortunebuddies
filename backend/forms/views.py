@@ -24,12 +24,11 @@ class FormSubmissionView(APIView):
         serializer = FormSubmissionSerializer(data=request.data)
         if serializer.is_valid():
             # Save with pending payment status
-            form_submission = serializer.save(user=request.user, payment_status='pending')
+            form_submission = serializer.save(user=request.user)
 
             return Response({
                 "message": "Form submitted successfully! Please complete the payment.",
                 "form_id": str(form_submission.id),
-                "payment_status": form_submission.payment_status
             })
         return Response(serializer.errors, status=400)
 
@@ -43,17 +42,22 @@ class CheckSubmissionStatus(APIView):
         user_profile, _ = UserProfile.objects.get_or_create(user=user)
 
         if latest_form:
-            if latest_form.payment_status == 'pending':
+            latest_payment = latest_form.payments.order_by('-created_at').first()
+
+            if latest_payment and latest_payment.status == 'pending':
                 return Response({
                     "can_submit": False,
                     "redirect_to": "payment",
                     "form_id": str(latest_form.id),
                 })
-            elif latest_form.payment_status == 'success' and user_profile.next_allowed_submission and user_profile.next_allowed_submission > timezone.now():
+
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            if latest_payment and latest_payment.status == 'success' and user_profile.next_allowed_submission and user_profile.next_allowed_submission > timezone.now():
                 return Response({
                     "can_submit": False,
                     "next_allowed_submission": user_profile.next_allowed_submission.isoformat(),
                     "redirect_to": "wait"
                 })
+
 
         return Response({"can_submit": True, "redirect_to": "form"})
