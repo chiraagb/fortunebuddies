@@ -1,66 +1,104 @@
-import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import Payment
-from forms.models import FormSubmission
+from rest_framework import status
+
 from django.conf import settings
+
+from cashfree_pg.models.create_order_request import CreateOrderRequest
+from cashfree_pg.api_client import Cashfree
+from cashfree_pg.models.customer_details import CustomerDetails
+from cashfree_pg.models.order_meta import OrderMeta
+
+from forms.models import FormSubmission
+from payments.models import Payment
+
 import uuid
+
+Cashfree.XClientId = settings.CASHFREE_APP_ID
+Cashfree.XClientSecret = settings.CASHFREE_SECRET_KEY
+Cashfree.XEnvironment = Cashfree.SANDBOX  # or Cashfree.PRODUCTION
+x_api_version = "2023-08-01"
 
 
 class CreateCashfreeOrderAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        form_id = request.data.get('form_id')
-        form = FormSubmission.objects.filter(id=form_id, user=request.user).first()
-        if not form:
-            return Response({"error": "Invalid form ID"}, status=400)
+        user = request.user
+        form_id = request.data.get("form_id")
 
-        # Order details
-        order_id = f"GB_{uuid.uuid4().hex[:12]}"
-        amount = "119.00"  # Or derive from form data
-        currency = "INR"
+        if not form_id:
+            return Response({"status": "error", "message": "Form ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        headers = {
-            "x-client-id": settings.CASHFREE_CLIENT_ID,
-            "x-client-secret": settings.CASHFREE_CLIENT_SECRET,
-            "x-api-version": "2025-01-01",
-            "Content-Type": "application/json"
-        }
+        try:
+            form = FormSubmission.objects.get(id=form_id)
+        except FormSubmission.DoesNotExist:
+            return Response({"status": "error", "message": "Form not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        data = {
-            "order_id": order_id,
-            "order_amount": amount,
-            "order_currency": currency,
-            "customer_details": {
-                "customer_id": str(request.user.id),
-                "customer_email": form.email,
-                "customer_phone": request.user.user_profile.phone,
-            },
-            "order_meta": {
-                "return_url": f"https://yourfrontend.com/payment-status?order_id={order_id}"
-            }
-        }
+        # Determine amount based on gender
+        gender = form.gender.lower()
+        amount = 49.0 if gender == "female" else 99.0
 
-        res = requests.post(f"{settings.CASHFREE_BASE_URL}/orders", headers=headers, json=data)
-        res_data = res.json()
+        # Create order ID and Payment record
+        payment_id = uuid.uuid4()
+        order_id = f"order_{payment_id.hex[:10]}"
 
-        if res.status_code == 200:
-            Payment.objects.create(
-                id=uuid.uuid4(),
-                user=request.user,
+        customer_phone = (
+            user.user_profile.phone if hasattr(user, "user_profile") and user.user_profile.phone
+            else "9999999999"
+        )
+
+        customer_details = CustomerDetails(
+            customer_id=f"user_{user.id}",
+            customer_phone=customer_phone,
+            customer_email=user.email if user.email else "None"
+        )
+
+        create_order_request = CreateOrderRequest(
+            order_amount=amount,
+            order_currency="INR",
+            customer_details=customer_details
+        )
+
+        order_meta = OrderMeta(
+            return_url=f"{settings.FRONTEND_BASE_URL}/thank-you?order_id={order_id}"
+        )
+        create_order_request.order_meta = order_meta
+        create_order_request.order_id = order_id
+
+        try:
+            api_response = Cashfree().PGCreateOrder(
+                x_api_version, create_order_request, None, None
+            )
+
+            payment_session_id = api_response.data.payment_session_id
+
+            # Save to DB
+            payment = Payment.objects.create(
+                id=payment_id,
+                user=user,
                 form_submission=form,
                 gateway="cashfree",
                 order_id=order_id,
                 amount=amount,
-                currency=currency,
+                currency="INR",
                 status="created",
-                provider_response=res_data
+                provider_response={
+                    "order_id": api_response.data.order_id,
+                    "payment_session_id": api_response.data.payment_session_id,
+                    "order_status": api_response.data.order_status,
+                }
             )
+
             return Response({
-                "payment_link": res_data.get("payment_link"),
+                "status": "success",
+                "payment_session_id": payment_session_id,
                 "order_id": order_id
             })
 
-        return Response({"error": res_data}, status=400)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": f"Error creating order: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
