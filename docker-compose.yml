@@ -28,7 +28,7 @@ services:
       - CASHFREE_SECRET_KEY=${CASHFREE_SECRET_KEY}
       - CASHFREE_BASE_URL=${CASHFREE_BASE_URL}
       - FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
-      - DEBUG=True
+      - DEBUG=${DEBUG}
     depends_on:
       - db
       - redis

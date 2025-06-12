@@ -12,13 +12,18 @@ from cashfree_pg.models.order_meta import OrderMeta
 
 from forms.models import FormSubmission
 from payments.models import Payment
+import logging
+
+logger = logging.getLogger(__name__)
 
 import uuid
 
 Cashfree.XClientId = settings.CASHFREE_APP_ID
 Cashfree.XClientSecret = settings.CASHFREE_SECRET_KEY
-Cashfree.XEnvironment = Cashfree.SANDBOX  # or Cashfree.PRODUCTION
+Cashfree.XEnvironment = Cashfree.SANDBOX if settings.DEBUG else Cashfree.PRODUCTION
 x_api_version = "2023-08-01"
+
+
 
 
 class CreateCashfreeOrderAPIView(APIView):
@@ -28,6 +33,8 @@ class CreateCashfreeOrderAPIView(APIView):
         user = request.user
         form_id = request.data.get("form_id")
 
+        logger.info(f"Cashfree settings: {Cashfree.XClientId}, {Cashfree.XEnvironment}")
+        
         if not form_id:
             return Response({"status": "error", "message": "Form ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
