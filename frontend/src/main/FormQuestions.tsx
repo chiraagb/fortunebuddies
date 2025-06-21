@@ -113,7 +113,7 @@ export default function MeetupForm() {
               `You can submit again after ${res.data.next_allowed_submission}`
             );
             // Redirect to a "Thank You" page or show a message
-            // Optionally you can use `navigate("/thank-you");` if using React Router
+            // Optionally can use `navigate("/thank-you");` if using React Router
           }
         }
       } catch (err) {
