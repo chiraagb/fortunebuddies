@@ -114,7 +114,6 @@ export default function MeetupForm() {
             );
             // Redirect to a "Thank You" page or show a message
             // Optionally you can use `navigate("/thank-you");` if using React Router
-            // Or set a message to show on the current page
           }
         }
       } catch (err) {
