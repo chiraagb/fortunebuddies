@@ -21,7 +21,7 @@ import uuid
 
 Cashfree.XClientId = settings.CASHFREE_APP_ID
 Cashfree.XClientSecret = settings.CASHFREE_SECRET_KEY
-Cashfree.XEnvironment = Cashfree.SANDBOX if settings.DEBUG else Cashfree.PRODUCTION
+Cashfree.XEnvironment =  getattr(Cashfree, settings.CASHFREE_ENVIRONMENT)
 x_api_version = "2023-08-01"
 
 
@@ -31,6 +31,7 @@ class CreateCashfreeOrderAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        print("Creating Cashfree order",settings.CASHFREE_APP_ID, settings.CASHFREE_SECRET_KEY,Cashfree.XEnvironment)
         user = request.user
         form_id = request.data.get("form_id")
 
