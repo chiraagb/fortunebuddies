@@ -2,14 +2,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-
+from datetime import timedelta
+from django.utils import timezone
 from django.conf import settings
 
 from cashfree_pg.models.create_order_request import CreateOrderRequest
 from cashfree_pg.api_client import Cashfree
 from cashfree_pg.models.customer_details import CustomerDetails
 from cashfree_pg.models.order_meta import OrderMeta
-
+from accounts.models import UserProfile
 from forms.models import FormSubmission
 from payments.models import Payment
 import logging
@@ -90,13 +91,17 @@ class CreateCashfreeOrderAPIView(APIView):
                 order_id=order_id,
                 amount=amount,
                 currency="INR",
-                status="created",
+                status="success",
                 provider_response={
                     "order_id": api_response.data.order_id,
                     "payment_session_id": api_response.data.payment_session_id,
                     "order_status": api_response.data.order_status,
                 }
             )
+            
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            user_profile.next_allowed_submission = timezone.now() + timedelta(days=7)
+            user_profile.save()
 
             return Response({
                 "status": "success",

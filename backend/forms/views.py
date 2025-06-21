@@ -52,6 +52,7 @@ class CheckSubmissionStatus(APIView):
                 })
 
             user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            
             if latest_payment and latest_payment.status == 'success' and user_profile.next_allowed_submission and user_profile.next_allowed_submission > timezone.now():
                 return Response({
                     "can_submit": False,

@@ -87,8 +87,41 @@ export default function MeetupForm() {
   const [formErrors, setFormErrors] = useState<{
     [key in keyof FormData]?: string;
   }>({});
+  const [canSubmit, setCanSubmit] = useState<boolean>(true);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
   const token = getToken();
+
+  useEffect(() => {
+    // Check form submission status when the component mounts
+    async function checkSubmissionStatus() {
+      try {
+        const res = await api.get("api/v1/forms/check-submission-status/");
+
+        if (res?.data?.can_submit === false) {
+          setCanSubmit(false);
+          setRedirectTo(res.data.redirect_to); // "payment", "wait", "form"
+          if (res.data.redirect_to === "payment") {
+            // Automatically move to Step 6 (Payment Step)
+            setStep(6);
+            toast.info("Please complete your payment before submitting again.");
+          } else if (res.data.redirect_to === "wait") {
+            // Handle wait (next allowed submission date)
+            toast.info(
+              `You can submit again after ${res.data.next_allowed_submission}`
+            );
+            // Redirect to a "Thank You" page or show a message
+            // Optionally you can use `navigate("/thank-you");` if using React Router
+            // Or set a message to show on the current page
+          }
+        }
+      } catch (err) {
+        console.error("Error checking submission status:", err);
+      }
+    }
+
+    checkSubmissionStatus();
+  }, [token]);
 
   useEffect(() => {
     async function initCashfree() {
