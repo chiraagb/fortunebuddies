@@ -1,12 +1,16 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { getToken } from "../api/apiHelpers";
 import api from "../api/axiosInstance";
 import { toast } from "sonner";
+// @ts-ignore
+
+import { load } from "@cashfreepayments/cashfree-js";
 
 // Define the form structure
 interface FormData {
+  id?: string;
   fullName: string;
   email: string;
   age: string;
@@ -41,8 +45,9 @@ interface CounterProps {
 }
 
 export default function MeetupForm() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [step, setStep] = useState<number>(1);
+  const [cashfree, setCashfree] = useState(null);
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
@@ -82,8 +87,56 @@ export default function MeetupForm() {
   const [formErrors, setFormErrors] = useState<{
     [key in keyof FormData]?: string;
   }>({});
+  const [canSubmit, setCanSubmit] = useState<boolean>(true);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
   const token = getToken();
+
+  useEffect(() => {
+    // Check form submission status when the component mounts
+    async function checkSubmissionStatus() {
+      try {
+        const res = await api.get("api/v1/forms/check-submission-status/");
+
+        if (res?.data?.can_submit === false) {
+          setCanSubmit(false);
+          setRedirectTo(res.data.redirect_to); // "payment", "wait", "form"
+          if (res.data.redirect_to === "payment") {
+            // Automatically move to Step 6 (Payment Step)
+            setStep(6);
+            toast.info("Please complete your payment before submitting again.");
+          } else if (res.data.redirect_to === "wait") {
+            // Handle wait (next allowed submission date)
+            toast.info(
+              `You can submit again after ${res.data.next_allowed_submission}`
+            );
+            // Redirect to a "Thank You" page or show a message
+            // Optionally you can use `navigate("/thank-you");` if using React Router
+            // Or set a message to show on the current page
+          }
+        }
+      } catch (err) {
+        console.error("Error checking submission status:", err);
+      }
+    }
+
+    checkSubmissionStatus();
+  }, [token]);
+
+  useEffect(() => {
+    async function initCashfree() {
+      const cf = await load({
+        mode: "sandbox", // or "production"
+      });
+
+      if (cf) {
+        setCashfree(cf);
+        console.log("Cashfree SDK loaded:", cf);
+      }
+    }
+
+    initCashfree();
+  }, []);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -157,8 +210,13 @@ export default function MeetupForm() {
     try {
       const res = await api.post("api/v1/forms/submit-form/", payload);
       toast.success("Get Set, Pay & Connect!");
-      if (res?.data) {
-        setStep(6);
+      if (res?.data?.form_id) {
+        setFormData((prev) => ({
+          ...prev,
+          id: res.data.form_id,
+        }));
+
+        setStep(6); // move to payment step
       }
     } catch (err: any) {
       console.error("Submission failed:", err);
@@ -170,8 +228,32 @@ export default function MeetupForm() {
     }
   };
 
-  const handleRazorpay = () => {
-    navigate("/thank-you");
+  const handleCashFree = async () => {
+    if (!formData.id) {
+      toast.error("Form ID missing. Please try submitting again.");
+      return;
+    }
+
+    try {
+      const res = await api.post("/api/v1/payments/create-order/", {
+        form_id: formData.id,
+      });
+
+      const sessionId = res.data?.payment_session_id;
+
+      if (cashfree && sessionId) {
+        // @ts-ignore
+        await cashfree.checkout({
+          paymentSessionId: sessionId,
+          redirectTarget: "_self", // or "_blank"
+        });
+      } else {
+        toast.error("Could not start payment session.");
+      }
+    } catch (err) {
+      console.error("Payment failed:", err);
+      toast.error("Something went wrong while initiating payment.");
+    }
   };
 
   const nextStep = () => {
@@ -1035,8 +1117,9 @@ export default function MeetupForm() {
                 Your group details will be messaged on your phone number
               </p>
               <button
+                disabled={!cashfree}
                 type="button"
-                onClick={handleRazorpay}
+                onClick={handleCashFree}
                 className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors cursor-pointer"
               >
                 Pay Now

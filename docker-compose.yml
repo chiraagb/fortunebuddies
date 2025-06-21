@@ -27,7 +27,8 @@ services:
       - CASHFREE_APP_ID=${CASHFREE_APP_ID}
       - CASHFREE_SECRET_KEY=${CASHFREE_SECRET_KEY}
       - CASHFREE_BASE_URL=${CASHFREE_BASE_URL}
-      - DEBUG=True
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
+      - DEBUG=${DEBUG}
     depends_on:
       - db
       - redis
