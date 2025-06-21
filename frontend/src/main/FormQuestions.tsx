@@ -92,6 +92,8 @@ export default function MeetupForm() {
 
   const token = getToken();
 
+  console.log(canSubmit, redirectTo);
+
   useEffect(() => {
     // Check form submission status when the component mounts
     async function checkSubmissionStatus() {
