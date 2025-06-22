@@ -113,7 +113,7 @@ export default function MeetupForm() {
             toast.info(
               `You can submit again after ${res.data.next_allowed_submission}`
             );
-            navigate("/thank-you", {
+            navigate("/comeback", {
               state: {
                 nextAllowedSubmission: res.data.next_allowed_submission,
               },
