@@ -8,6 +8,7 @@ import ThankYou from "./main/ThankYouPage";
 import PrivateRoute from "./PrivateRoute";
 import TermsAndConditions from "./auth/TermsAndConditions";
 import PrivacyPolicy from "./auth/PrivacyPolicy";
+import ComeBackPage from "./main/ComeBackPage";
 
 const App: React.FC = () => (
   <>
@@ -21,6 +22,7 @@ const App: React.FC = () => (
         <Route element={<PrivateRoute />}>
           <Route path="form-questions" element={<FormQuestions />} />
           <Route path="thank-you" element={<ThankYou />} />
+          <Route path="comeback" element={<ComeBackPage />} />
         </Route>
 
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />

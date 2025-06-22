@@ -113,7 +113,12 @@ export default function MeetupForm() {
             toast.info(
               `You can submit again after ${res.data.next_allowed_submission}`
             );
-            navigate("/thank-you");
+            navigate("/thank-you", {
+              state: {
+                nextAllowedSubmission: res.data.next_allowed_submission,
+              },
+            });
+
             // Redirect to a "Thank You" page or show a message
             // Optionally can use `navigate("/thank-you");` if using React Router
           }
