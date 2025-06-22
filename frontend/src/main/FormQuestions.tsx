@@ -7,6 +7,7 @@ import { toast } from "sonner";
 // @ts-ignore
 
 import { load } from "@cashfreepayments/cashfree-js";
+import { useNavigate } from "react-router-dom";
 
 // Define the form structure
 interface FormData {
@@ -45,7 +46,7 @@ interface CounterProps {
 }
 
 export default function MeetupForm() {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const [step, setStep] = useState<number>(1);
   const [cashfree, setCashfree] = useState(null);
   const [formData, setFormData] = useState<FormData>({
@@ -112,6 +113,7 @@ export default function MeetupForm() {
             toast.info(
               `You can submit again after ${res.data.next_allowed_submission}`
             );
+            navigate("/thank-you");
             // Redirect to a "Thank You" page or show a message
             // Optionally can use `navigate("/thank-you");` if using React Router
           }
