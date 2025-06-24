@@ -134,7 +134,7 @@ export default function MeetupForm() {
   useEffect(() => {
     async function initCashfree() {
       const cf = await load({
-        mode: "sandbox", // or "production"
+        mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT,
       });
 
       if (cf) {
