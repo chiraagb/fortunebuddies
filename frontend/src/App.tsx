@@ -17,7 +17,6 @@ const App: React.FC = () => (
         {/* Public routes */}
         <Route index element={<LoginHomePage />} />
         <Route path="login" element={<LoginMainPage />} />
-
         {/* All routes under here are protected */}
         <Route element={<PrivateRoute />}>
           <Route path="form-questions" element={<FormQuestions />} />
