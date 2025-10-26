@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const LoginHome = () => {
   return (
     <SafeAreaView>
-      <Text>Welcome Home</Text>
+      <Text>Login Screen</Text>
     </SafeAreaView>
   );
 };
