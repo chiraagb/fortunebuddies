@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     'corsheaders',
+    "channels",          # WebSocket support (django-channels)
     "accounts",
     "forms",
     "payments",
@@ -76,6 +77,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION  = 'config.asgi.application'   # channels picks this up
 
 
 # Database
@@ -154,13 +156,46 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': False,                 # if using blacklist
 }
 
-MESSAGE_CENTRAL_AUTH_KEY= os.getenv("MESSAGE_CENTRAL_AUTH_KEY")
+MESSAGE_CENTRAL_AUTH_KEY = os.getenv("MESSAGE_CENTRAL_AUTH_KEY")
 
+# ── OTP rate limiting ────────────────────────────────────────────────────────
+# Max OTP attempts per phone number within OTP_RATE_WINDOW seconds
+OTP_MAX_ATTEMPTS = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
+OTP_RATE_WINDOW  = int(os.getenv("OTP_RATE_WINDOW",  "60"))   # seconds
 
-CASHFREE_APP_ID = os.getenv("CASHFREE_APP_ID")
-CASHFREE_SECRET_KEY = os.getenv("CASHFREE_SECRET_KEY")
-CASHFREE_BASE_URL= os.getenv("CASHFREE_BASE_URL")
-CASHFREE_ENVIRONMENT=os.getenv("CASHFREE_ENVIRONMENT")  
-FRONTEND_BASE_URL= os.getenv("FRONTEND_BASE_URL", "http://localhost:5173/thank-you")
+# ── Cashfree ─────────────────────────────────────────────────────────────────
+CASHFREE_APP_ID          = os.getenv("CASHFREE_APP_ID")
+CASHFREE_SECRET_KEY      = os.getenv("CASHFREE_SECRET_KEY")
+CASHFREE_BASE_URL        = os.getenv("CASHFREE_BASE_URL")
+CASHFREE_ENVIRONMENT     = os.getenv("CASHFREE_ENVIRONMENT")
+CASHFREE_WEBHOOK_SECRET  = os.getenv("CASHFREE_WEBHOOK_SECRET", "")  # set in prod!
+FRONTEND_BASE_URL        = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173")
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  
+# ── Redis — shared for cache + channel layers ─────────────────────────────────
+_REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+_REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        # DB 1 for cache (keep DB 0 free for other Redis use)
+        "LOCATION": f"redis://{_REDIS_HOST}:{_REDIS_PORT}/1",
+        "OPTIONS": {
+            "socket_connect_timeout": 5,
+            "socket_timeout": 5,
+        },
+    }
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(_REDIS_HOST, int(_REDIS_PORT))],
+            "capacity": 1500,          # max messages queued per channel
+            "expiry":   60,            # message TTL in seconds
+        },
+    },
+}
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
